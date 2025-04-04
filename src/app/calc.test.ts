@@ -1,0 +1,57 @@
+import { initialCalculatorState, reducer } from "./calc";
+import { expect, test } from 'vitest'
+
+function calcSeq(xs: string) {
+  let state = initialCalculatorState
+  for (let x of xs.split(" ")) {
+    state = reducer(state, x)
+  }
+  return state
+}
+
+test("reads long numbers", () => {
+  expect(calcSeq("1 2 3 4 5 6 7 8 9 0 0 0 =").val).toBe(123456789000)
+})
+
+test("keeps a value", () => {
+  expect(calcSeq("2 =").val).toBe(2)
+  expect(calcSeq("2 = =").val).toBe(2)
+})
+
+test("adds 2 + 2", () => {
+  expect(calcSeq("2 + 2 =").val).toBe(4)
+})
+
+test("calculates value on new operation", () => {
+  expect(calcSeq("2 + 2 *").val).toBe(4)
+})
+
+test("remembers last binary operation", () => {
+  expect(calcSeq("3 * 2 = = =").val).toBe(3 * 2 * 2 * 2)
+})
+
+test("doesn't remember last unary operation", () => {
+  expect(calcSeq("3 x^2 = = =").val).toBe(9)
+})
+
+test("= does nothing if no operation can be repeated", () => {
+  expect(calcSeq("4 = = =").val).toBe(4)
+})
+
+test("does unary operators in the right order", () => {
+  expect(calcSeq("2 + 9 sqrt =").val).toBe(5)
+})
+
+test("using unary operator ends number edit mode", () => {
+  expect(calcSeq("2 + 9 sqrt 1 0 0 =").val).toBe(102)
+})
+
+// test("+/- on 0 does nothing", () => {
+//   expect(calcSeq("0 +/- 2 =").val).toBe(2)
+// })
+
+test("clears", () => {
+  expect(calcSeq("1 0 0 0 C").val).toBe(0)
+  expect(calcSeq("1 0 0 0 = C").val).toBe(0)
+  expect(calcSeq("2 + C").pending).toBe(null)
+})
