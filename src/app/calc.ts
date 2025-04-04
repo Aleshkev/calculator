@@ -66,7 +66,23 @@ function makeDigitEditOps() {
 }
 
 const editOpsById: Map<string, EditOpImpl> = groupById([
-  ...makeDigitEditOps()
+  ...makeDigitEditOps(),
+  {
+    id: "DEL", label: "DEL", f: (s: string) => {
+      let z = s.slice(0, -1)
+      return z || "0"
+    }
+  },
+  {
+    id: ".", label: ".", f: (s: string) => {
+      return s.includes(".") ? s : s + "."
+    }
+  },
+  {
+    id: "+/-", label: "+/-", f: (s: string) => {
+      return s === "0" ? "0" : s[0] === "-" ? s.slice(1) : "-" + s
+    }
+  }
 ])
 
 function parseInput(s: string): Num {
@@ -76,6 +92,10 @@ function parseInput(s: string): Num {
 export function reducer(state: CalculatorState, action: string): CalculatorState {
   if (action === "C") {
     return initialCalculatorState
+  }
+
+  if (action === "CE") {
+    return { ...state, val: 0, editing: null }
   }
 
   const editOp = editOpsById.get(action)

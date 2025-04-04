@@ -13,6 +13,22 @@ test("reads long numbers", () => {
   expect(calcSeq("1 2 3 4 5 6 7 8 9 0 0 0 =").val).toBe(123456789000)
 })
 
+test("reads fractions", () => {
+  expect(calcSeq(". 5 * 2 =").val).toBe(1)
+})
+
+test("ignores unnecessary decimal points", () => {
+  expect(calcSeq(". 5 . . * 2 . =").val).toBe(1)
+})
+
+test("does CE", () => {
+  expect(calcSeq("4 * 3 CE 4 =").val).toBe(16)
+})
+
+test("negates numbers", () => {
+  expect(calcSeq("1 - 5 +/- =").val).toBe(6)
+})
+
 test("keeps a value", () => {
   expect(calcSeq("2 =").val).toBe(2)
   expect(calcSeq("2 = =").val).toBe(2)
