@@ -1,11 +1,14 @@
 import { groupById } from "./util"
 
+
+type Num = number
+
 export type CalculatorState = {
-  memory: number
-  pending: null | { val: number, op: BinOpImpl }
-  val: number
+  memory: Num
+  pending: null | { val: Num, op: BinOpImpl }
+  val: Num
   editing: null | string
-  last: null | { op: BinOpImpl, val: number }
+  last: null | { op: BinOpImpl, val: Num }
 }
 
 export const initialCalculatorState: CalculatorState = {
@@ -16,23 +19,20 @@ export const initialCalculatorState: CalculatorState = {
   last: null
 }
 
-type Num = number
-
-type BinOpImpl = {
+type AnyOpImpl = {
   id: string,
-  label: string,
+  label: string
+}
+
+type BinOpImpl = AnyOpImpl & {
   f: (x: Num, y: Num) => Num
 }
 
-type UnaryOpImpl = {
-  id: string,
-  label: string,
+type UnaryOpImpl = AnyOpImpl & {
   f: (x: Num) => Num
 }
 
-type EditOpImpl = {
-  id: string,
-  label: string,
+type EditOpImpl = AnyOpImpl & {
   f: (x: string) => string
 }
 
@@ -47,13 +47,11 @@ const binOpsById: Map<string, BinOpImpl> = groupById([
 const unaryOpsById: Map<string, UnaryOpImpl> = groupById([
   { id: "x^3", label: "x^2", f: (x: Num) => Math.pow(x, 3) },
   { id: "Abs", label: "Abs", f: (x: Num) => Math.abs(x) },
-  { id: "x^2", label: "x^2", f: (x: Num) => x * x },
+  { id: "x^2", label: "x²", f: (x: Num) => x * x },
   { id: "sqrt", label: "√x", f: (x: Num) => Math.sqrt(x) },
   { id: "log", label: "log", f: (x: Num) => Math.log10(x) },
   { id: "ln", label: "ln", f: (x: Num) => Math.log(x) },
-  { id: "(-)", label: "(-)", f: (x: Num) => -x },
-  { id: "x^-1", label: "x^-1", f: (x: Num) => Math.pow(x, -1) },
-  { id: "1/x", label: "1/x", f: (x: Num) => 1 / x },
+  { id: "x^-1", label: "x⁻¹", f: (x: Num) => Math.pow(x, -1) },
   { id: "%", label: "%", f: (x: Num) => x / 100 }
 ])
 
@@ -85,6 +83,10 @@ const editOpsById: Map<string, EditOpImpl> = groupById([
   }
 ])
 
+export function getAnyOpById(id: string): AnyOpImpl | undefined {
+  return editOpsById.get(id) || binOpsById.get(id) || unaryOpsById.get(id)
+}
+
 function parseInput(s: string): Num {
   return +s
 }
@@ -105,7 +107,25 @@ export function reducer(state: CalculatorState, action: string): CalculatorState
     }
     return { ...state, editing: editOp.f("0") }
   }
+
+  // Non-edit operations end edit mode.
   state = { ...state, val: state.editing ? parseInput(state.editing) : state.val, editing: null }
+
+  if (action === "M+") {
+    return { ...state, memory: state.memory + state.val }
+  }
+  if (action === "M-") {
+    return { ...state, memory: state.memory - state.val }
+  }
+  if (action === "MR") {
+    return { ...state, val: state.memory }
+  }
+  if (action === "MC") {
+    return { ...state, memory: 0 }
+  }
+  if (action === "MS") {
+    return { ...state, memory: state.memory }
+  }
 
   if (action === "=") {
     if (!state.pending) {
