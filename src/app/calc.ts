@@ -4,7 +4,7 @@ import { groupById } from "./util"
 type Num = number
 
 export type CalculatorState = {
-  memory: Num
+  memory: null | Num
   pending: null | { val: Num, op: BinOpImpl }
   val: Num
   editing: null | string
@@ -12,7 +12,7 @@ export type CalculatorState = {
 }
 
 export const initialCalculatorState: CalculatorState = {
-  memory: 0,
+  memory: null,
   pending: null,
   val: 0,
   editing: null,
@@ -35,6 +35,8 @@ type UnaryOpImpl = AnyOpImpl & {
 type EditOpImpl = AnyOpImpl & {
   f: (x: string) => string
 }
+
+type SpecialOpImpl = AnyOpImpl & {}
 
 const binOpsById: Map<string, BinOpImpl> = groupById([
   { id: "+", label: "+", f: (x: Num, y: Num) => x + y },
@@ -83,8 +85,20 @@ const editOpsById: Map<string, EditOpImpl> = groupById([
   }
 ])
 
+// These operations are handled by the main reducer function.
+const specialOpsById: Map<string, SpecialOpImpl> = groupById([
+  { id: "=", label: "=" },
+  { id: "C", label: "C" },
+  { id: "CE", label: "CE" },
+  { id: "M+", label: "M+" },
+  { id: "M-", label: "M-" },
+  { id: "MR", label: "MR" },
+  { id: "MC", label: "MC" },
+  { id: "MS", label: "MS" },
+])
+
 export function getAnyOpById(id: string): AnyOpImpl | undefined {
-  return editOpsById.get(id) || binOpsById.get(id) || unaryOpsById.get(id)
+  return specialOpsById.get(id) ?? editOpsById.get(id) ?? binOpsById.get(id) ?? unaryOpsById.get(id)
 }
 
 function parseInput(s: string): Num {
@@ -92,6 +106,10 @@ function parseInput(s: string): Num {
 }
 
 export function reducer(state: CalculatorState, action: string): CalculatorState {
+  if (getAnyOpById(action) === undefined) {
+    throw new Error(`Unsupported action: ${action}`)
+  }
+
   if (action === "C") {
     return initialCalculatorState
   }
@@ -112,19 +130,22 @@ export function reducer(state: CalculatorState, action: string): CalculatorState
   state = { ...state, val: state.editing ? parseInput(state.editing) : state.val, editing: null }
 
   if (action === "M+") {
-    return { ...state, memory: state.memory + state.val }
+    return { ...state, memory: (state.memory ?? 0) + state.val }
   }
   if (action === "M-") {
-    return { ...state, memory: state.memory - state.val }
+    return { ...state, memory: (state.memory ?? 0) - state.val }
   }
   if (action === "MR") {
+    if (state.memory === null) {
+      return state
+    }
     return { ...state, val: state.memory }
   }
   if (action === "MC") {
-    return { ...state, memory: 0 }
+    return { ...state, memory: null }
   }
   if (action === "MS") {
-    return { ...state, memory: state.memory }
+    return { ...state, memory: state.val }
   }
 
   if (action === "=") {
@@ -150,5 +171,5 @@ export function reducer(state: CalculatorState, action: string): CalculatorState
     return { ...state, val: unaryOp.f(state.val) }
   }
 
-  throw new Error(`Invalid action: ${action}`)
+  throw new Error(`Action doesn't have an implementation: ${action}`)
 }
