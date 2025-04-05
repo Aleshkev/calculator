@@ -1,7 +1,9 @@
+import { ReactNode } from "react";
+
 type Props = {
-  text: string;
-  hint?: string;
-  memoryHint?: string;
+  text: ReactNode;
+  hint?: ReactNode;
+  memoryHint?: ReactNode;
 };
 
 export function Display({ text, hint, memoryHint }: Props) {
