@@ -120,9 +120,9 @@ export function reducer(state: CalculatorState, action: string): CalculatorState
   const binOp = binOpsById.get(action)
   if (binOp) {
     if (state.pending) {
-      state = { ...state, val: state.pending.op.f(state.pending.val, state.val), pending: null }
+      state = reducer(state, "=")
     }
-    return { ...state, pending: { val: state.val, op: binOp } }
+    return { ...state, pending: { val: state.val, op: binOp }, val: 0 }
   }
 
   const unaryOp = unaryOpsById.get(action)
