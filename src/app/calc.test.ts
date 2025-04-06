@@ -71,3 +71,27 @@ test("clears", () => {
   expect(calcSeq("1 0 0 0 = C").val).toBe(0)
   expect(calcSeq("2 + C").pending).toBe(null)
 })
+
+test("stores and recalls values from memory", () => {
+  expect(calcSeq("1 0 MS 9 MR =").val).toBe(10)
+})
+
+test("sums values in memory", () => {
+  expect(calcSeq("1 0 M+ 2 0 M+ MR =").val).toBe(30)
+})
+
+test("subtracts values in memory", () => {
+  expect(calcSeq("1 0 M- 2 0 M- MR =").val).toBe(-30)
+})
+
+test("clears memory", () => {
+  expect(calcSeq("9 MS 0 MC MR =").val).toBe(0)
+})
+
+test("doesn't recall 0 when memory is empty", () => {
+  expect(calcSeq("5 MR =").val).toBe(5)
+})
+
+test("recalls 0 when a 0 is in memory", () => {
+  expect(calcSeq("MS 5 MR =").val).toBe(0)
+})
